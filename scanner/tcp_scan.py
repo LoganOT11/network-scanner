@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 def scan_port(ip, port):
     try:
-        with socket.create_connection((ip, port), timeout=1) as sock:
+        with socket.create_connection((ip, port), timeout=0.3) as sock:
             print(f"[+] {ip}:{port} is open")
     except:
         pass  # Closed or unreachable
