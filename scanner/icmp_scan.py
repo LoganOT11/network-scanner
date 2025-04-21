@@ -10,12 +10,17 @@ def ping_ip(ip):
     # Use platform-specific flag: -n for Windows, -c for Unix
     param = "-n" if platform.system().lower() == "windows" else "-c"
     command = ["ping", param, "1", ip]
+    
     try:
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print(f"{ip} -> returncode={result.returncode}")
-        return result.returncode == 0
-    except Exception as e:
-        print(f"{ip} -> exception: {e}")
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+        output = result.stdout.lower()
+
+        # Looser check: "time" and "ttl" instead of strict "time=" or "ttl="
+        if "ttl" in output and "time" in output:
+            return True
+        return False
+
+    except Exception:
         return False
 
 def scan_alive_hosts(ip_list, threads=100):
