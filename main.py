@@ -15,22 +15,40 @@ def main():
     print(f"\n[*] Running ICMP ping sweep on {network}...")
     icmp_ips = set(scan_alive_hosts(all_ips))
 
-    # Show full comparison
-    print("\n[✓] Scan Results Summary")
-    print(f"ARP-only:   {arp_ips - icmp_ips}")
-    print(f"ICMP-only:  {icmp_ips - arp_ips}")
-    print(f"Both:       {arp_ips & icmp_ips}")
+    # Comparison sets
+    arp_only = arp_ips - icmp_ips
+    icmp_only = icmp_ips - arp_ips
+    both = arp_ips & icmp_ips
 
-    # Union of both sets for port scan
+    # Show summary with cleaned formatting
+    def fmt(result_set):
+        return str(result_set) if result_set else "{}"
+
+    print("\n[✓] Scan Results Summary")
+    print(f"ARP-only:   {fmt(arp_only)}")
+    print(f"ICMP-only:  {fmt(icmp_only)}")
+    print(f"Both:       {fmt(both)}")
+
+    # Final IPs to scan = union of all discovered hosts
     final_ips = sorted(arp_ips | icmp_ips)
 
-    # Port scan on each alive host
+    def discovery_method(ip):
+        if ip in arp_ips and ip in icmp_ips:
+            return "ARP + ICMP"
+        elif ip in arp_ips:
+            return "ARP only"
+        elif ip in icmp_ips:
+            return "ICMP only"
+        else:
+            return "Unknown"  # Should never happen with current logic
+
+    # Run port scan
     print("\n[*] Starting port scans...")
     port_range = range(1, 1025)
     for ip in final_ips:
-        print(f"\n[+] Scanning ports on {ip}")
+        label = discovery_method(ip)
+        print(f"\n[+] Scanning ports on {ip} ({label})")
         scan_ip_ports(ip, port_range)
 
 if __name__ == "__main__":
     main()
-
