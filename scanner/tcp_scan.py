@@ -18,7 +18,7 @@ def scan_ip_ports(ip, ports, timeout=1):
                 if banner:
                     print(f"  →  {banner}")
                 else:
-                    print()
+                    print(f"  →  No banner found")
         except:
             pass  # silently ignore closed/filtered ports
 
