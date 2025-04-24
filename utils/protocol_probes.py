@@ -17,13 +17,29 @@ def https_probe(ip, port, timeout):
                 request = (
                     f"GET / HTTP/1.1\r\n"
                     f"Host: {ip}\r\n"
-                    "User-Agent: Mozilla/5.0 (BannerScanner)\r\n"
+                    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n"
                     "Accept: */*\r\n"
                     "Connection: close\r\n"
                     "\r\n"
                 )
                 ssock.sendall(request.encode())
-                return ssock.recv(1024).decode(errors="ignore").strip()
+
+                # Read just enough to extract headers (1024B usually covers it)
+                response = ssock.recv(1024).decode(errors="ignore")
+
+                # Only keep response headers (before first blank line)
+                headers = response.split("\r\n\r\n")[0].splitlines()
+
+                # Look for Server header first
+                for line in headers:
+                    if line.lower().startswith("server:"):
+                        return line.strip()  # e.g. Server: nginx/1.18.0
+
+                # If no Server header, return HTTP status line
+                if headers:
+                    return headers[0].strip()  # e.g. HTTP/1.1 400 Bad Request
+
+                return None
     except:
         return None
 
@@ -44,7 +60,9 @@ def ftp_probe(ip, port, timeout):
 def ssh_probe(ip, port, timeout):
     try:
         with socket.create_connection((ip, port), timeout=timeout) as s:
-            return s.recv(1024).decode(errors="ignore").strip()
+            s.settimeout(timeout)
+            banner = s.makefile('rb').readline().decode(errors="ignore").strip()
+            return banner
     except:
         return None
 
