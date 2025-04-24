@@ -14,7 +14,15 @@ def https_probe(ip, port, timeout):
         context = ssl.create_default_context()
         with socket.create_connection((ip, port), timeout=timeout) as raw_sock:
             with context.wrap_socket(raw_sock, server_hostname=ip) as ssock:
-                ssock.sendall(f"GET / HTTP/1.1\r\nHost: {ip}\r\n\r\n".encode())
+                request = (
+                    f"GET / HTTP/1.1\r\n"
+                    f"Host: {ip}\r\n"
+                    "User-Agent: Mozilla/5.0 (BannerScanner)\r\n"
+                    "Accept: */*\r\n"
+                    "Connection: close\r\n"
+                    "\r\n"
+                )
+                ssock.sendall(request.encode())
                 return ssock.recv(1024).decode(errors="ignore").strip()
     except:
         return None
